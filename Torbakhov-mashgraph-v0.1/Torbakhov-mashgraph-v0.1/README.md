@@ -6,3 +6,6 @@
 5) Parallax relief mapping +4
 
 Итог: 14
+
+Сборка
+1) С установленным cmake через run.bat на Windows и run на Linux
