@@ -1,0 +1,5 @@
+#!/bin/bash
+mkdir Torbakhov-mashgraph-build
+cd Torbakhov-mashgraph-build
+cmake −DCMAKE_BUILD_TYPE=Release ../Torbakhov-mashgraph
+make -j 4
