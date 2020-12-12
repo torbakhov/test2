@@ -4,14 +4,6 @@
 #include "custom_include/FrameBuffer.h"
 #include "custom_include/ShaderProgram.h"
 
-#if defined __linux__ || defined __APPLE__ 
-#else
-//use Nvidia
-extern "C" {
-	_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
-	_declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
-}
-#endif
 
 int initGL()
 {
@@ -33,7 +25,6 @@ int initGL()
 
 int main(int argc, char** argv)
 {
-
 	if(!glfwInit())
     return -1;
 
@@ -71,6 +62,8 @@ int main(int argc, char** argv)
 
 	glEnable(GL_DEPTH_TEST);
 
+	glfwSwapInterval(1); // force 60 frames per second
+
 	Mesh framebufferQuadMesh;
 	framebufferQuadMesh.load("meshes/rect.obj");
 
@@ -79,16 +72,16 @@ int main(int argc, char** argv)
 	ShaderProgram shadowGenShaderProgram(shaders);
 
 	Camera shadowCamera;
-	shadowCamera.set_pos(glm::vec3(8.0f, 6.0f, -5.0f));
-	shadowCamera.set_dir(-shadowCamera.get_pos());
+	shadowCamera.pos = glm::vec3(8.0f, 6.0f, -5.0f);
+	shadowCamera.dir = -shadowCamera.pos;
 
 	Framebuffer shadowMapFramebuffer;
 	Texture shadowMapTexture;
-	shadowMapTexture.init(GL_DEPTH_COMPONENT, SHADOWMAP_WIDTH, SHADOWMAP_HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT);
+	shadowMapTexture.initDepth(SHADOWMAP_WIDTH, SHADOWMAP_HEIGHT);
 	shadowMapFramebuffer.initializeTextures(&shadowMapTexture);
 
 
-	//Objects
+	//Object
 	Object cube, plane;
 	Mesh cubeMesh, planeMesh;
 	Texture cubeTexture, planeTexture;
@@ -127,48 +120,28 @@ int main(int argc, char** argv)
 
 	//Camera
 	Camera cam;
-	cam.set_pos(glm::vec3(7.0f, 5.0f, 7.0f));
-	cam.set_dir(-cam.get_pos());
-	cam.set_move_speed(5.0f);
-
-	//night_vision
-	Texture night_visionDepthTexture;
-	Texture night_visionColorTexture;
-	Texture night_visionNormalMap;
-	Framebuffer night_visionFramebuffer;
-	Object night_visionScreen;
-
-	shaders[GL_VERTEX_SHADER] = "vertex_quad.glsl";
-	shaders[GL_FRAGMENT_SHADER] = "fragment_night_vision.glsl";
-	ShaderProgram night_visionShader(shaders);
-
-	night_visionDepthTexture.init(GL_DEPTH_COMPONENT, WIDTH, HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT);
-	night_visionColorTexture.init(GL_RGB, WIDTH, HEIGHT, GL_RGB, GL_FLOAT);
-
-	night_visionFramebuffer.initializeTextures(&night_visionDepthTexture, &night_visionColorTexture);
-
-	night_visionScreen.mesh = &framebufferQuadMesh;
-	night_visionScreen.diffuseMap = &night_visionColorTexture;
-	night_visionNormalMap.loadTexture("textures/noise_texture.bmp");
-	night_visionScreen.normalMap = &night_visionNormalMap;
-	night_visionScreen.heightMap = &night_visionDepthTexture;
-	night_visionScreen.shader = &night_visionShader;
-
-	bool night_visionMode = false;
-	bool night_visionChanged = false;
+	cam.pos = glm::vec3(7.0f, 5.0f, 7.0f);
+	cam.dir = -cam.pos;
+	cam.moveSpeed = 2.0f;
 
 	double time_prev = glfwGetTime();
 	float deltaTime;
 
-	//rendering
+	//цикл обработки сообщений и отрисовки сцены каждый кадр
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+
+		deltaTime = glfwGetTime() - time_prev;
+		time_prev = deltaTime + time_prev;
+
+		cam.moveCam(window, deltaTime);
 
 		//Rendering ShadowMap
 		shadowMapFramebuffer.bind();
 
 		glViewport(0, 0, SHADOWMAP_WIDTH, SHADOWMAP_HEIGHT);
+		//очищаем экран каждый кадр
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);               GL_CHECK_ERRORS;
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); GL_CHECK_ERRORS;
 
@@ -178,39 +151,21 @@ int main(int argc, char** argv)
 		shadowMapFramebuffer.unbind();
 		GL_CHECK_ERRORS;
 
-		if (night_visionMode) night_visionFramebuffer.bind();
-		// clear screen
+		program.StartUseShader();                           GL_CHECK_ERRORS;
+
+
+		// очистка и заполнение экрана цветом
+		//
 		glViewport  (0, 0, WIDTH, HEIGHT);
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear     (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
 		
 		cube.drawObject(&cam, NULL, &shadowCamera);
 		plane.drawObject(&cam, NULL, &shadowCamera);
 
-		if (night_visionMode) {
-			night_visionFramebuffer.unbind();
 
-			glViewport(0, 0, WIDTH, HEIGHT);
-			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-			night_visionScreen.drawObject(NULL,NULL,NULL, deltaTime);
-		}
-
-		deltaTime = glfwGetTime() - time_prev;
-		time_prev = deltaTime + time_prev;
-
-		cam.moveCam(window, deltaTime);
-		
-		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS) {
-			if (!night_visionChanged) {
-				night_visionMode = !night_visionMode;
-				night_visionChanged = true;
-			}
-		}
-		else {
-			night_visionChanged = false;
-		}
+		program.StopUseShader();
 
 		glfwSwapBuffers(window); 
 	}
