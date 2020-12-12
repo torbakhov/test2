@@ -18,15 +18,6 @@ public:
 
 	void init(int format1, GLsizei w, GLsizei h, GLenum format2, GLenum type);
 
-	void initColor(GLsizei w = WIDTH, GLsizei h = HEIGHT)
-	{
-		init(GL_RGB, w, h, GL_RGB, GL_FLOAT);
-	}
-	void initDepth(GLsizei w = WIDTH, GLsizei h = HEIGHT)
-	{
-		init(GL_DEPTH_COMPONENT, w, h, GL_DEPTH_COMPONENT, GL_FLOAT);
-	}
-
 	void bind(int slot) const
 	{
 		glActiveTexture(GL_TEXTURE0 + slot);

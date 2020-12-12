@@ -4,8 +4,29 @@
 
 class Camera {
 public:
-	glm::vec3 pos, dir, right, up;
-	float moveSpeed;
+	glm::vec3 get_pos() {
+		return pos;
+	}
+
+	void set_pos(glm::vec3 position) {
+		pos = position;
+	}
+
+	glm::vec3 get_dir() {
+		return dir;
+	}
+
+	void set_dir(glm::vec3 direction) {
+		dir = glm::normalize(direction);
+	}
+
+	float get_move_speed() {
+		return moveSpeed;
+	}
+
+	void set_move_speed(float move_speed) {
+		moveSpeed = move_speed;
+	}
 
 	glm::mat4 viewMatrix() const
 	{
@@ -19,4 +40,8 @@ public:
 	}
 
 	void moveCam(GLFWwindow* window, float delta);
+
+private:
+	glm::vec3 pos, dir, right, up;
+	float moveSpeed;
 };

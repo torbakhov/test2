@@ -1,13 +1,15 @@
 #include "../custom_include/Object.h"
 
-void Object::drawObject(Camera* camera, ShaderProgram* overrideShader, Camera* shadowCamera) const
+void Object::drawObject(Camera* camera, ShaderProgram* overrideShader, Camera* shadowCamera, float deltaTime) const
 {
 	ShaderProgram* usedShader = overrideShader;
-	if (!usedShader)
-		usedShader = shader;
+	if (!usedShader) usedShader = shader;
 
 	usedShader->StartUseShader();
 	GL_CHECK_ERRORS;
+	int deltaTimeID = usedShader->uniformLocation("deltaTime");
+	glUniform1f(deltaTimeID, deltaTime);
+
 	int modelMatrixID = usedShader->uniformLocation("modelMatrix");
 	int normalMatrixID = usedShader->uniformLocation("normalMatrix");
 
@@ -16,6 +18,7 @@ void Object::drawObject(Camera* camera, ShaderProgram* overrideShader, Camera* s
 	glUniformMatrix4fv(modelMatrixID, 1, GL_FALSE, &model[0][0]);
 	glUniformMatrix3fv(normalMatrixID, 1, GL_FALSE, &normal[0][0]);
 	GL_CHECK_ERRORS;
+
 	if (camera) {
 		int cameraPosWSID = usedShader->uniformLocation("cameraPosWS");
 		int viewMatrixID = usedShader->uniformLocation("viewMatrix");
@@ -23,10 +26,11 @@ void Object::drawObject(Camera* camera, ShaderProgram* overrideShader, Camera* s
 
 		glm::mat4 view = camera->viewMatrix();
 		glm::mat4 projection = camera->projectionMatrix();
-		glUniform3f(cameraPosWSID, camera->pos.x, camera->pos.y, camera->pos.z);
+		glUniform3f(cameraPosWSID, camera->get_pos().x, camera->get_pos().y, camera->get_pos().z);
 		glUniformMatrix4fv(viewMatrixID, 1, GL_FALSE, &view[0][0]);
 		glUniformMatrix4fv(projectionMatrixID, 1, GL_FALSE, &projection[0][0]);
 	}
+
 	if (shadowCamera) {
 		int lightPosWSID = usedShader->uniformLocation("lightPosWS");
 		int shadowSpaceMatrixID = usedShader->uniformLocation("shadowSpaceMatrix");
@@ -34,7 +38,7 @@ void Object::drawObject(Camera* camera, ShaderProgram* overrideShader, Camera* s
 		glm::mat4 shadowView = shadowCamera->viewMatrix();
 		glm::mat4 shadowProjection = shadowCamera->projectionMatrix();
 		glm::mat4 shadowSpace = shadowProjection * shadowView;
-		glUniform3f(lightPosWSID, shadowCamera->pos.x, shadowCamera->pos.y, shadowCamera->pos.z);
+		glUniform3f(lightPosWSID, shadowCamera->get_pos().x, shadowCamera->get_pos().y, shadowCamera->get_pos().z);
 		glUniformMatrix4fv(shadowSpaceMatrixID, 1, GL_FALSE, &shadowSpace[0][0]);
 	}
 	GL_CHECK_ERRORS;

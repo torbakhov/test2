@@ -16,7 +16,10 @@ public:
 	glm::quat rotation;
 	float scale;
 
-	Object() : mesh(NULL), shader(NULL), diffuseMap(NULL), normalMap(NULL), heightMap(NULL), scale(1.0f) {}
+	Object()
+		: mesh(NULL), shader(NULL),
+		diffuseMap(NULL), normalMap(NULL), heightMap(NULL), shadowMap(NULL),
+		scale(1.0f) {}
 
-	void drawObject(Camera* camera, ShaderProgram* overrideShader = NULL, Camera* shadowCamera = NULL) const;
+	void drawObject(Camera* camera, ShaderProgram* overrideShader = NULL, Camera* shadowCamera = NULL, float deltaTime = 0) const;
 };

@@ -11,21 +11,21 @@ void computeTangentBasis(
 	std::vector<glm::vec3>& bitangents
 ) {
 
-	for (unsigned int i = 0; i < vertices.size(); i += 3) {
+	for (size_t i = 0; i < vertices.size(); i = i + 3) {
 
 		// Shortcuts for vertices
 		glm::vec3& v0 = vertices[i + 0];
 		glm::vec3& v1 = vertices[i + 1];
 		glm::vec3& v2 = vertices[i + 2];
 
+		// Edges of the triangle : postion delta
+		glm::vec3 deltaPos1 = v1 - v0;
+		glm::vec3 deltaPos2 = v2 - v0;
+
 		// Shortcuts for UVs
 		glm::vec2& uv0 = uvs[i + 0];
 		glm::vec2& uv1 = uvs[i + 1];
 		glm::vec2& uv2 = uvs[i + 2];
-
-		// Edges of the triangle : postion delta
-		glm::vec3 deltaPos1 = v1 - v0;
-		glm::vec3 deltaPos2 = v2 - v0;
 
 		// UV delta
 		glm::vec2 deltaUV1 = uv1 - uv0;
@@ -35,16 +35,10 @@ void computeTangentBasis(
 		glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
 		glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
 
-		// Set the same tangent for all three vertices of the triangle.
-		// They will be merged later, in vboindexer.cpp
-		tangents.push_back(tangent);
-		tangents.push_back(tangent);
-		tangents.push_back(tangent);
-
-		// Same thing for binormals
-		bitangents.push_back(bitangent);
-		bitangents.push_back(bitangent);
-		bitangents.push_back(bitangent);
+		for (size_t i = 0; i < 3; i++) {
+			tangents.push_back(tangent);
+			bitangents.push_back(bitangent);
+		}
 
 	}
 
@@ -74,7 +68,6 @@ bool getSimilarVertexIndex_fast(
 	}
 }
 
-
 void indexVBO_TBN(
 	std::vector<glm::vec3>& in_vertices,
 	std::vector<glm::vec2>& in_uvs,
@@ -91,7 +84,7 @@ void indexVBO_TBN(
 ) {
 	std::map<PackedVertex, unsigned> VertexToOutIndex;
 	// For each input vertex
-	for (unsigned int i = 0; i < in_vertices.size(); i++) {
+	for (size_t i = 0; i < in_vertices.size(); i++) {
 		PackedVertex packed = { in_vertices[i], in_uvs[i], in_normals[i] };
 		// Try to find a similar vertex in out_XXXX
 		unsigned short index;
@@ -135,7 +128,7 @@ void Mesh::load(
 		return;
 	}
 
-	while (1) {
+	while(true) {
 
 		char lineHeader[128];
 		// read the first word of the line
@@ -144,7 +137,6 @@ void Mesh::load(
 			break; // EOF = End Of File. Quit the loop.
 
 		// else : parse lineHeader
-
 		if (strcmp(lineHeader, "v") == 0) {
 			glm::vec3 vertex;
 			fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
@@ -170,26 +162,21 @@ void Mesh::load(
 				fclose(file);
 				return;
 			}
-			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[1]);
-			vertexIndices.push_back(vertexIndex[2]);
-			uvIndices.push_back(uvIndex[0]);
-			uvIndices.push_back(uvIndex[1]);
-			uvIndices.push_back(uvIndex[2]);
-			normalIndices.push_back(normalIndex[0]);
-			normalIndices.push_back(normalIndex[1]);
-			normalIndices.push_back(normalIndex[2]);
+			for (size_t i = 0; i < 3; i++) {
+				vertexIndices.push_back(vertexIndex[i]);
+				uvIndices.push_back(uvIndex[i]);
+				normalIndices.push_back(normalIndex[i]);
+			}
 		}
 		else {
 			// Probably a comment, eat up the rest of the line
 			char stupidBuffer[1000];
 			fgets(stupidBuffer, 1000, file);
 		}
-
 	}
 
 	// For each vertex of each triangle
-	for (unsigned int i = 0; i < vertexIndices.size(); i++) {
+	for (size_t i = 0; i < vertexIndices.size(); i++) {
 
 		// Get the indices of its attributes
 		unsigned int vertexIndex = vertexIndices[i];

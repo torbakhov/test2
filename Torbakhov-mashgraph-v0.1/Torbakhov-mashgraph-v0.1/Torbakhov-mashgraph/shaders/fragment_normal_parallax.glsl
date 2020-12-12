@@ -23,6 +23,7 @@ vec3 getBumpedNormal(vec2 texCoords)
     vec3 bumpedNormal = texture(normalTexture, texCoords).xyz;
     bumpedNormal = 2.0f * bumpedNormal - 1.0f;
     bumpedNormal = normalize(fragTBN * bumpedNormal);
+	
     return bumpedNormal;
 }
 
@@ -59,6 +60,7 @@ vec2 getParallaxTexCoords()
     {
         discard;
     }
+	
     return texCoords;
 }
 
@@ -75,6 +77,7 @@ float readDepthMap(vec2 texCoords, vec2 texelSize)
 
     float maxLeft = mix(texelBL, texelTL, fractPart.y);
     float maxRight = mix(texelBR, texelTR, fractPart.y);
+	
     return mix(maxLeft, maxRight, fractPart.x);
 }
 
@@ -101,6 +104,7 @@ float calculateShadow(vec3 normalWS, vec3 lightDirWS)
             shadow = shadow + ( depthCurrent - bias > depthPCF ? 1.0f : 0.0f );
         }
     }
+	
     return shadow / (numSamples * numSamples);
 }
 
@@ -119,6 +123,7 @@ vec4 calculate_lighting(vec3 normalWS, vec3 lightPositionWS, vec3 cameraPosition
 	float shadow = calculateShadow(normalWS, lightDirWS);
 
 	float light_val = ambient + (1.0f - shadow) * (diffuse + specular);
+	
 	return vec4(light_val, light_val, light_val, 1.0f);
 }
 
